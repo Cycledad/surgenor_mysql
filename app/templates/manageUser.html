@@ -1,0 +1,179 @@
+{% extends 'AdminBase.html' %}
+
+{% block content %}
+
+<div id="manageUser-table"></div>
+
+{% endblock content %}
+
+{% block scriptsAdmin %}
+
+
+<script>
+
+
+var dateEditor = (cell, onClick, success, cancel, editorParams) => {
+   var editor = document.createElement("input");
+   editor.value = cell.getValue();
+   //debugger;
+   var datepicker = flatpickr(editor, {
+     enableTime: true,
+     dateFormat: "Y-m-d",
+     onClose: (selectedDates, dateStr, instance) => {
+       success(dateStr);
+       updateCol(cell);
+       instance.destroy();
+     },
+     onChange: (selectedDates, dateStr, instance) => {
+       success(dateStr);
+       updateCol(cell)
+       instance.destroy();
+     },
+   });
+
+   onClick(() => {
+     editor.focus();
+   });
+
+   return editor;
+ };
+
+var updateCol = (cell) =>
+{
+    //debugger;
+    var row = cell.getRow();
+    var rowData = row.getData();
+    id = rowData[0];
+    givenName = rowData[1];
+    surname = rowData[2];
+    username = rowData[3];
+    password = rowData[4];
+    createDate = rowData[5];
+    active = rowData[6];
+    dateInactive = rowData[7];
+    securityLevel = rowData[8];
+    value = id + "," + givenName + "," + surname + "," + username + "," + password + "," +  createDate + "," + active + "," + dateInactive + "," +  securityLevel
+    URL = "/api/data/manageUser?action=update&value=" + value;
+    table.setData(URL);
+};
+
+
+//custom formatter definition
+var printIcon = function(cell, formatterParams, onrendered){
+    return "<img src=./static/img/printer-16.png>";
+};
+
+
+//Build Tabulator
+var table = new Tabulator("#manageUser-table",
+{
+
+    ajaxURL: "/api/data/manageUser",
+    //height:"500px",
+    height:"650px",
+    //layout:"fitData",
+    layout:"fitColumns",
+    selectable:true,
+    placeholder:"No Data Set",
+    pagination:"local",
+    //paginationSize:10,
+    //paginationSizeSelector:[3, 6, 8, 10],
+    paginationSize:20,
+    paginationSizeSelector:[5, 10, 15, 20],
+    movableColumns:true,
+    paginationCounter:"rows",
+    locale: true,
+    langs:{
+        "fr":{ //French language definition - keep these in sync with utilities.py
+               //no need to define english, en, as it is default and title values will be used
+               //translations done here: https://imtranslator.net/translation/english/to-french/translation/
+                "columns":{
+                    "1" : "prénom",                             //given name
+                    "2" : "nom de famille",                     //surname
+                    "3" : "nom d’utilisateur",                  //username
+                    "4" : "mot de passe",                       //password
+                    "5" : "créer la date",                      //createDate
+                    "6" : "actif",                              //active
+                    "7" : "dateInactif",                        //dateInActive
+                    "8" : "niveau de sécurité",                 //securityLevel
+                },
+                 "pagination":{
+                "first":"Premier",
+                "first_title":"Première Page",
+                "last":"Dernier",
+                "last_title":"Dernière Page",
+                "prev":"Précédent",
+                "prev_title":"Page Précédente",
+                "next":"Suivant",
+                "next_title":"Page Suivante",
+                "page_size": "Taille de page",
+                "Showing": "montrant",
+                "of": "de",
+                "rows": "lignes",
+            },
+            "headerFilters":{
+                            "default":"filter column...", //default header filter placeholder text
+                            "columns":{
+                                "1":"Trouver le prénom ...", //replace default header filter text for column name
+                                "2":"Trouver le nom de famille ...", //replace default header filter text for column name
+                                "3":"Trouver le nom d’utilisateur ...", //replace default header filter text for column name
+                                "4":"Trouver un mot de passe ...",
+                                "5":"Trouver la date de création de l’utilisateur ...",
+                                "6":"Trouver des utilisateurs actifs ...",
+                                "7":"Trouver Date utilisateur inactif ...",
+                                "8":"Trouver le niveau de sécurité ...",
+                            }
+                        }
+            },
+        },
+    initialSort:[
+        {column: "1", dir:"asc"}, //sort by username, ascending
+
+    ],
+    columns:[
+        {title:"id", field:"0", hozAlign:"center", sorter:"number", visible:false},
+        {title:"given name", field:"1", hozAlign:"center", sorter:"string", visible:true, editor:true, cellEdited:updateCol, headerFilter:"input", headerFilterPlaceholder:"Find Given Name ..."},
+        {title:"surname", field:"2", hozAlign:"center", sorter:"string", visible:true, editor:true, cellEdited:updateCol, headerFilter:"input", headerFilterPlaceholder:"Find Surname ..."},
+        {title:"username", field:"3", hozAlign:"center", sorter:"string", editor:false, cellEdited:updateCol, headerFilter:"input", headerFilterPlaceholder:"Find Username ..."},
+        {title:"password", field:"4", hozAlign:"center", sorter:"string", editor:false, cellEdited:updateCol, headerFilter:"input", headerFilterPlaceholder:"Find Password ..."},
+        {title:"createDate", field:"5", hozAlign:"center", sorter:"string", editor:dateEditor, headerFilter:"input", headerFilterPlaceholder:"Find User Creation Date ..."},
+        {title:"active", field:"6", hozAlign:"center", sorter:"number", editor:true, cellEdited:updateCol, headerFilter:"input", headerFilterPlaceholder:"Find Active Users ..."},
+        {title:"dateInActive", field:"7", hozAlign:"center", sorter:"string", editor:dateEditor, headerFilter:"input", headerFilterPlaceholder:"Find Date User Inactive ..."},
+        {title:"securityLevel", field:"8", hozAlign:"center", sorter:"number", editor:true, cellEdited:updateCol, headerFilter:"input", headerFilterPlaceholder:"Find Security Level ..."},
+    ],
+});
+
+columns: ['', '', '', '', '', '', '', '', '']
+
+
+//cellEdited:updateCol,
+
+
+
+function printit(cell)
+{
+    alert("print it");
+}
+
+table.on('tableBuilt', function(){
+
+    URL = "/getLanguage"
+    xhttp = new XMLHttpRequest();
+    xhttp.open("GET", URL);
+    xhttp.send();
+    //debugger;
+    xhttp.onreadystatechange = function ()
+    {
+        if (this.readyState == 4 && this.status == 200)
+        {
+            //alert(this.responseText);
+            lang = this.responseText;
+            //debugger;
+            table.setLocale(lang);
+        }
+    }
+});
+
+
+</script>
+{% endblock scriptsAdmin %}
